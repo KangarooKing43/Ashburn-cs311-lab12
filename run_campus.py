@@ -16,32 +16,94 @@ from typing import Dict, List, Optional, Set
 ASSIGNMENT_ID = "LAB12"
 
 
-def build_graph(connector_groups: Dict[str, List[str]]) -> Dict[str, List[str]]:
-    """
-    Turn {connector group: [building list]} into an adjacency list: every pair of
-    buildings in the same connector group is connected by an edge (undirected).
-    """
-    # TODO
-    raise NotImplementedError
+def build_graph(connector_groups):
+    graph = {}
+
+    for buildings in connector_groups.values():
+        # Ensure every building exists as a vertex.
+        for building in buildings:
+            if building not in graph:
+                graph[building] = []
+
+        # Connect every building to every other building.
+        for i in range(len(buildings)):
+            for j in range(len(buildings)):
+                if i != j:
+                    source = buildings[i]
+                    destination = buildings[j]
+
+                    if destination not in graph[source]:
+                        graph[source].append(destination)
+
+    return graph
 
 
-def has_path(graph: Dict[str, List[str]], start: str, target: str, visited: Optional[Set[str]] = None) -> bool:
-    """
-    Recursive DFS sanity-check: True if `start` and `target` are
-    connected at all (not necessarily the shortest way).
-    Must handle start == target, and a fully exhausted search.
-    """
-    # TODO
-    raise NotImplementedError
+def has_path(graph, start, target, visited=None):
+    if visited is None:
+        visited = set()
+
+    # Base case: we reached the target.
+    if start == target:
+        return True
+
+    # Prevent revisiting vertices.
+    if start in visited:
+        return False
+
+    visited.add(start)
+
+    # Recursively explore each neighbor.
+    for neighbor in graph.get(start, []):
+        if neighbor not in visited:
+            if has_path(graph, neighbor, target, visited):
+                return True
+
+    # Base case: no path was found from this vertex.
+    return False
 
 
 def bfs_shortest_path(graph: Dict[str, List[str]], start: str, target: str) -> Optional[List[str]]:
-    """
-    Iterative (BFS is naturally level-by-level -- explain in a comment
-    why recursion isn't the natural fit here). Use collections.deque.
-    Return the ordered list of buildings forming the shortest chain from
-    `start` to `target`, or None if no path exists.
-    """
+    from collections import deque
+
+
+def bfs_shortest_path(graph, start, target):
+    # Same-start route.
+    if start == target:
+        return [start]
+
+    if start not in graph or target not in graph:
+        return None
+
+    queue = deque([start])
+    visited = {start}
+    parent = {start: None}
+
+    # A queue-processing loop is more natural than recursion here
+    # because BFS must process vertices in FIFO layer order.
+    while queue:
+        current = queue.popleft()
+
+        for neighbor in graph.get(current, []):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                parent[neighbor] = current
+
+                if neighbor == target:
+                    # Reconstruct the path from target back to start.
+                    path = []
+                    node = target
+
+                    while node is not None:
+                        path.append(node)
+                        node = parent[node]
+
+                    path.reverse()
+                    return path
+
+                queue.append(neighbor)
+
+    # The target is unreachable.
+    return None
     # BFS processes nodes queue-first, level by level, rather than
     # diving depth-first along one branch -- that's an inherently
     # iterative "expand the frontier" process, not a "solve a smaller
